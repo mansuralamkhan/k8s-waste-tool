@@ -1,4 +1,4 @@
-
+s
 # K8s Waste Detector
 
 A lightweight, self-hosted tool that shows you exactly how much idle capacity
