@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>K8s Waste Detector</title>
+<style>
+  :root {
+    --bg: #0b0f14; --card: #121820; --border: #232b35;
+    --text: #e6edf3; --muted: #8b96a5; --accent: #f0883e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); padding: 32px 20px; }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+  .summary { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px; margin-bottom: 20px; }
+  .summary .amount { font-size: 32px; font-weight: 600; color: var(--accent); }
+  .summary .label { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+  tr:hover { background: rgba(255,255,255,0.02); }
+  .cost { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .zero { color: var(--muted); }
+  .controls { margin-bottom: 16px; display: flex; gap: 8px; align-items: center; }
+  select, button { background: var(--card); color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+  button { cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  .error { color: #f85149; padding: 16px; }
+  .loading { color: var(--muted); padding: 16px; }
+  .note { color: var(--muted); font-size: 12px; margin-top: 20px; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>K8s Waste Detector</h1>
+    <div class="sub">Idle capacity by namespace, pulled live from OpenCost</div>
+
+    <div class="controls">
+      <label for="window" style="color:var(--muted); font-size:13px;">Window</label>
+      <select id="window">
+        <option value="15m">Last 15 minutes</option>
+        <option value="1h" selected>Last hour</option>
+        <option value="24h">Last 24 hours</option>
+        <option value="7d">Last 7 days</option>
+      </select>
+      <button id="refresh">Refresh</button>
+    </div>
+
+    <div class="summary">
+      <div class="amount" id="total-amount">—</div>
+      <div class="label">total idle cost across all namespaces, this window</div>
+    </div>
+
+    <div id="content"><div class="loading">Loading…</div></div>
+
+    <div class="note">
+      Idle = requested minus actually used. A namespace with no resource
+      requests set shows 0 idle here even if usage is low — that's a
+      different problem (no limits set) worth checking separately.
+    </div>
+  </div>
+
+<script>
+  const contentEl = document.getElementById('content');
+  const totalEl = document.getElementById('total-amount');
+  const windowSel = document.getElementById('window');
+  const refreshBtn = document.getElementById('refresh');
+
+  function fmtCost(n) {
+    if (n < 0.01 && n > 0) return '$' + n.toFixed(4);
+    return '$' + n.toFixed(2);
+  }
+  function fmtCPU(cores) { return cores.toFixed(2) + ' cores'; }
+  function fmtRAM(bytes) {
+    const gb = bytes / (1024 ** 3);
+    if (gb < 0.01) return (bytes / (1024 ** 2)).toFixed(1) + ' MiB';
+    return gb.toFixed(2) + ' GiB';
+  }
+
+  async function load() {
+    contentEl.innerHTML = '<div class="loading">Loading…</div>';
+    totalEl.textContent = '—';
+    try {
+      const win = windowSel.value;
+      const res = await fetch(`/api/v1/idle?window=${encodeURIComponent(win)}`);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Request failed (${res.status})`);
+      }
+      render(await res.json());
+    } catch (err) {
+      contentEl.innerHTML = `<div class="error">Couldn't load data: ${err.message}</div>`;
+    }
+  }
+
+  function render(rows) {
+    rows.sort((a, b) => b.IdleCost - a.IdleCost);
+    const total = rows.reduce((sum, r) => sum + r.IdleCost, 0);
+    totalEl.textContent = fmtCost(total);
+
+    if (rows.length === 0) {
+      contentEl.innerHTML = '<div class="loading">No namespaces found for this window.</div>';
+      return;
+    }
+
+    contentEl.innerHTML = `
+      <table>
+        <thead><tr><th>Namespace</th><th>Idle CPU</th><th>Idle RAM</th><th>Idle cost</th></tr></thead>
+        <tbody>${rows.map(r => `
+          <tr>
+            <td>${r.Namespace}</td>
+            <td class="${r.IdleCPU > 0 ? '' : 'zero'}">${fmtCPU(r.IdleCPU)}</td>
+            <td class="${r.IdleRAM > 0 ? '' : 'zero'}">${fmtRAM(r.IdleRAM)}</td>
+            <td class="cost">${fmtCost(r.IdleCost)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  refreshBtn.addEventListener('click', load);
+  windowSel.addEventListener('change', load);
+  load();
+</script>
+</body>
+</html>

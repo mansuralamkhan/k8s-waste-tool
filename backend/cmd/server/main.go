@@ -18,6 +18,7 @@ func main() {
 	client := opencost.NewClient(openCostURL)
 
 	mux := http.NewServeMux()
+	mux.Handle("/", http.FileServer(http.Dir("../dashboard")))
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
