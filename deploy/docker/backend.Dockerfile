@@ -12,5 +12,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /out/server ./cmd/server
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates
 COPY --from=build /out/server /server
+COPY dashboard/ /dashboard
 EXPOSE 8080
 ENTRYPOINT ["/server"]
