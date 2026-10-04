@@ -1,0 +1,11 @@
+# deploy/helm/values.yaml
+image:
+  repository: waste-detector
+  tag: dev
+  pullPolicy: IfNotPresent
+
+openCostURL: "http://opencost.opencost.svc.cluster.local:9003"
+
+service:
+  type: ClusterIP
+  port: 8080
