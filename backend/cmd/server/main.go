@@ -27,22 +27,23 @@ func main() {
 	})
 
 	mux.HandleFunc("/api/v1/idle", func(w http.ResponseWriter, r *http.Request) {
-		window := r.URL.Query().Get("window")
-		if window == "" {
-			window = "1h"
-		}
+    window := r.URL.Query().Get("window")
+    if window == "" {
+        window = "1h"
+    }
 
-		resp, err := client.GetAllocations(window, "namespace")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadGateway)
-			return
-		}
+    resp, err := client.GetAllocations(window, "namespace")
+    if err != nil {
+        log.Printf("idle handler error: %v", err)
+        http.Error(w, "Couldn't fetch cluster data right now — check that OpenCost is running and reachable.", http.StatusBadGateway)
+        return
+    }
 
-		results := waste.Calculate(resp)
+    results := waste.Calculate(resp)
 
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(results)
-	})
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(results)
+}))
 
 	log.Println("starting server on :8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {
