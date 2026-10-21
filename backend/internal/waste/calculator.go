@@ -47,8 +47,11 @@ func Calculate(resp *opencost.AllocationResponse) []NamespaceIdle {
 // proratedCost returns the share of totalCost attributable to the idle
 // portion of what was requested. If nothing was requested, idle cost is 0
 // (can't be "wasting" money on something you never reserved).
+// proratedCost returns the share of totalCost attributable to the idle
+// portion of what was requested. Nothing requested, or a zero/negative
+// cost from upstream, means no idle cost: never report negative money.
 func proratedCost(idle, requested, totalCost float64) float64 {
-	if requested <= 0 {
+	if requested <= 0 || totalCost <= 0 {
 		return 0
 	}
 	return (idle / requested) * totalCost
