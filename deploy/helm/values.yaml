@@ -16,3 +16,8 @@ resources:
   limits:
     cpu: 200m
     memory: 128Mi
+
+auth:
+  existingSecret: ""   # name of a Secret with keys: username, password
+  username: admin      # only used if you pass auth.password below
+  password: ""         # quick-demo option; prefer existingSecret

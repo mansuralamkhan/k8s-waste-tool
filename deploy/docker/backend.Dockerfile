@@ -13,5 +13,6 @@ FROM alpine:3.20
 RUN apk add --no-cache ca-certificates
 COPY --from=build /out/server /server
 COPY dashboard/ /dashboard
+USER 10001:10001
 EXPOSE 8080
 ENTRYPOINT ["/server"]

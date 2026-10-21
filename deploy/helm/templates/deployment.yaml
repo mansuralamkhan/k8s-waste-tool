@@ -1,3 +1,4 @@
+{{- $secretName := default (printf "%s-auth" .Release.Name) .Values.auth.existingSecret }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,15 +13,40 @@ spec:
       labels:
         app: {{ .Release.Name }}
     spec:
+      serviceAccountName: {{ .Release.Name }}
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: waste-detector
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           env:
             - name: OPENCOST_URL
               value: {{ .Values.openCostURL | quote }}
+            {{- if or .Values.auth.password .Values.auth.existingSecret }}
+            - name: AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: username
+            - name: AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: password
+            {{- end }}
           resources:
             requests:
               cpu: {{ .Values.resources.requests.cpu }}
