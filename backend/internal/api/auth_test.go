@@ -16,12 +16,12 @@ func TestBasicAuth(t *testing.T) {
 	h := BasicAuth("admin", "s3cret", map[string]bool{"/healthz": true}, okHandler())
 
 	tests := []struct {
-		name    string
-		path    string
-		user    string
-		pass    string
+		name     string
+		path     string
+		user     string
+		pass     string
 		sendAuth bool
-		want    int
+		want     int
 	}{
 		{"no credentials", "/", "", "", false, http.StatusUnauthorized},
 		{"wrong password", "/", "admin", "nope", true, http.StatusUnauthorized},

@@ -1,4 +1,6 @@
+// Package waste turns OpenCost allocation data into idle-capacity numbers.
 package waste
+
 import "github.com/mansuralamkhan/k8s-waste-tool/backend/internal/opencost"
 
 // NamespaceIdle is the idle-capacity result for one namespace.
@@ -44,9 +46,6 @@ func Calculate(resp *opencost.AllocationResponse) []NamespaceIdle {
 	return results
 }
 
-// proratedCost returns the share of totalCost attributable to the idle
-// portion of what was requested. If nothing was requested, idle cost is 0
-// (can't be "wasting" money on something you never reserved).
 // proratedCost returns the share of totalCost attributable to the idle
 // portion of what was requested. Nothing requested, or a zero/negative
 // cost from upstream, means no idle cost: never report negative money.

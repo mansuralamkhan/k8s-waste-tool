@@ -8,7 +8,6 @@ import (
 	"github.com/mansuralamkhan/k8s-waste-tool/backend/internal/opencost"
 )
 
-
 func TestCalculate_DemoNamespaceIsIdle(t *testing.T) {
 	raw, err := os.ReadFile("testdata/sample-allocation.json")
 	if err != nil {
@@ -37,8 +36,9 @@ func TestCalculate_DemoNamespaceIsIdle(t *testing.T) {
 	if demo.IdleRAM <= 0 {
 		t.Errorf("expected demo namespace to have idle RAM, got %f", demo.IdleRAM)
 	}
+}
 
-	func TestProratedCost(t *testing.T) {
+func TestProratedCost(t *testing.T) {
 	cases := []struct {
 		name      string
 		idle      float64
@@ -59,5 +59,4 @@ func TestCalculate_DemoNamespaceIsIdle(t *testing.T) {
 			}
 		})
 	}
-}
 }
