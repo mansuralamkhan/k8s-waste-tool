@@ -1,6 +1,6 @@
 image:
-  repository: waste-detector
-  tag: dev
+  repository: ghcr.io/mansuralamkhan/k8s-waste-tool
+  tag: ""            # empty = use the chart's appVersion
   pullPolicy: IfNotPresent
 
 openCostURL: "http://opencost.opencost.svc.cluster.local:9003"
